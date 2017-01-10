@@ -169,6 +169,11 @@ void GameObject::DrawOnEditor()
 				AddComponent(Component::Type::C_Billboard);
 			}
 		}
+		// PS: Add Particle System ----
+		if (ImGui::MenuItem("Particle System##add"))
+		{
+			AddComponent(Component::Type::C_ParticleSystem);
+		}
 		ImGui::EndPopup();
 	}
 
@@ -442,6 +447,15 @@ Component* GameObject::AddComponent(Component::Type type, std::string res, bool 
 		if (HasComponent(Component::C_Billboard) == false)
 		{
 			toAdd = new Billboard(this);
+		}
+		break;
+	}
+	// PS: Add Particle System ----
+	case Component::Type::C_ParticleSystem:
+	{
+		if (HasComponent(Component::Type::C_transform))
+		{
+			toAdd = new ParticleSystem(this);
 		}
 		break;
 	}

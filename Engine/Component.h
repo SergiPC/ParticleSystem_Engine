@@ -21,6 +21,7 @@ public:
 		C_camera,
 		C_Billboard,
 		C_Shader,
+		C_ParticleSystem,
 
 		//Keep this "C_None" always last
 		C_None

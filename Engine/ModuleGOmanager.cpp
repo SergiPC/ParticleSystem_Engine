@@ -229,6 +229,14 @@ GameObject* ModuleGoManager::CreateCamera(const char* name)
 	return camera;
 }
 
+// PS: Create a gameobject with just a Particle System attached to it
+GameObject* ModuleGoManager::CreateParticleSystem(const char* name)
+{
+	GameObject* particleSystem = CreateEmpty(name);
+	particleSystem->AddComponent(Component::Type::C_ParticleSystem);
+	return particleSystem;
+}
+
 GameObject * ModuleGoManager::DuplicateGO(GameObject * toCopy)
 {
 	GameObject* ret = new GameObject();

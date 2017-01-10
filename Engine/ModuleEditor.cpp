@@ -356,6 +356,11 @@ update_status ModuleEditor::MenuBar()
 			{
 				App->GO->CreateCamera();
 			}
+			// PS: Create new GameObject with a Particle System ---- 
+			if (ImGui::MenuItem("Particle System##CreateEmptyPS") == true)
+			{
+				App->GO->CreateParticleSystem();
+			}
 			ImGui::EndMenu();
 		}
 		if (ImGui::BeginMenu("Documentation"))
