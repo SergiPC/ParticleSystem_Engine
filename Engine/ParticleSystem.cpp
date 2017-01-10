@@ -29,7 +29,24 @@ ParticleSystem::ParticleSystem(GameObject* linkedTo) : Component(linkedTo, C_Par
 	shape = EmitterShape::Cone;
 }
 
+void ParticleSystem::EmitParticles()
+{}
+
 void ParticleSystem::UpdateNow()
+{}
+
+void ParticleSystem::RenderParticles()
+{}
+
+bool ParticleSystem::LoadParticleTexture(const std::string& fileName)
+{
+	return true;
+}
+
+void ParticleSystem::Resize(unsigned int numParticles)
+{}
+
+void ParticleSystem::BuildBuffer()
 {}
 
 void ParticleSystem::EditorContent()
