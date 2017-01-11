@@ -2,6 +2,7 @@
 #define __PARTICLE_SYSTEM__
 
 #include "Component.h"
+#include "PerfTimer.h"
 
 // PS: ParticleSystem.h ---- 
 
@@ -35,14 +36,21 @@ class ParticleSystem : public Component
 {
 public:
 	ParticleSystem(GameObject* linkedTo);
-	
+	~ParticleSystem();
+
 	void EmitParticles();
-	void UpdateNow();
+	void EmitParticle(Particle& particle);
+	void UpdateNow(const float3& point, const float3& up = float3::zero);
 	void RenderParticles();
+
+	int FindUnusedParticle();
 
 	bool LoadParticleTexture(const std::string& fileName);
 	void Resize(unsigned int numParticles);
 	void BuildBuffer();
+
+	void RandomizeParticles();
+	void RandomizeParticle(Particle& particle);
 
 	void EditorContent();
 
@@ -67,6 +75,8 @@ private:
 	int rate = 0;
 	// Shape -------------
 	int shape = 0;
+	float angleShape = .0f;
+	float radiusShape = .0f;
 	// Texture -----------
 	unsigned int particleTextureID = 0;
 
@@ -76,6 +86,10 @@ private:
 	float4x4 localToWorldMatrix;
 	// Apply this force to every particle in the effect
 	float3 particleForce = float3::zero;
+
+	// -------------------
+	int lastUsedParticle = 0;
+	int numParticlesAlive = 0;
 };
 
 #endif

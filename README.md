@@ -1,7 +1,7 @@
 
 # V_Engine
 
-A simple game engine developed by Vulpem.     
+A simple game engine developed by Vulpem with a Particle System made by Sergi Pérez.     
 This has been created for learning purposes, during 2016 at the CITM university.   
 
 Source code can be found at:        
