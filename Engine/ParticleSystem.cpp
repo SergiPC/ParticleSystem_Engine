@@ -18,23 +18,26 @@ ParticleSystem::ParticleSystem(GameObject* linkedTo) : Component(linkedTo, C_Par
 	name = tmp;
 
 	// Global ------------
-	duration = 5.f;
 	looping = false;
 	startLifetime = 5.f;
 	startSpeed = 5.f;
 	startSize = 1.f;
+	endSize = 1.f;
 	gravityModifier = .0f;
-	maxParticles = 100;
+	alpha = .0f;
+	maxParticles = 1000;
 
 	// Emission ----------
-	rate = 10;
+	rate = 100;
+	angleShape = 15.0f;
+	radiusShape = 1.0f;
 
 	// Shape -------------
 	shape = EmitterShape::Cone;
 
 	// -------------------
-	particleForce = float3(0, -9.81f, 0);
-	TIMER_START("ParticleSystemTimer");
+	lastUsedParticle = 0;
+	numParticlesAlive = 0;
 }
 
 ParticleSystem::~ParticleSystem()
@@ -56,22 +59,22 @@ void ParticleSystem::EmitParticles()
 	if (newParticles > (int)(0.016f*rate))
 		newParticles = (int)(0.016f*rate);
 
-	if (numParticlesAlive + newParticles < maxParticles)
-	{
-		int tmpInt = 0;
+	if (numParticlesAlive + newParticles > maxParticles)
+		newParticles = maxParticles - numParticlesAlive;
+	
+	int tmpInt = 0;
 
-		for (int i = 0; i < newParticles; i++)
-		{
-			tmpInt = FindUnusedParticle();
-			EmitParticle(particlesContainer[tmpInt]);
-		}
+	for (int i = 0; i < newParticles; i++)
+	{
+		tmpInt = FindUnusedParticle();
+		EmitParticle(particlesContainer[tmpInt]);
 	}
 }
 
 void ParticleSystem::EmitParticle(Particle& particle)
 {
-	// Sphere Emitter --
-	// Cone Emitter ----
+	// Sphere Emitter ----
+	// Cone Emitter ------
 	float polarAngle = angleShape - rand() % (int)angleShape*2;
 	float azimuth = 180 - rand() % 360;
 	float radius = (float)rand() / (float)RAND_MAX; // 0 to 1.
@@ -87,11 +90,48 @@ void ParticleSystem::EmitParticle(Particle& particle)
 
 	particle.position = origin;
 	particle.speed = unitVec * startSpeed;
+	particle.pGravity = gravityModifier;
 	particle.life = startLifetime;
+	particle.pLifeTime = startLifetime;
+	particle.pSize = startSize;
+	particle.sSize = startSize;
+	particle.eSize = endSize;
+
+	numParticlesAlive++;
 }
 
 void ParticleSystem::UpdateNow(const float3& point, const float3& _up)
-{}
+{
+	// Emit particles ----
+	EmitParticles();
+
+	// Update particles --
+	for (std::vector<Particle>::iterator it = particlesContainer.begin(); it != particlesContainer.end(); it++)
+	{
+		if (it->life > .0f)
+		{
+			it->life -= Time.dt;
+			if (it->life > .0f)
+			{
+				// Gravity -----------
+				float3 gravityEffect = float3(.0f, it->pGravity, .0f);
+				it->speed += gravityEffect * Time.dt * 0.5f;
+				it->position += it->speed * Time.dt;
+
+				// Size --------------
+				float incSize = ((it->eSize - it->sSize) / it->pLifeTime) * Time.dt;
+				it->pSize += incSize;
+
+				// GPU Buffer --------
+			}
+
+			else
+			{
+				numParticlesAlive--;
+			}
+		}
+	}
+}
 
 void ParticleSystem::RenderParticles()
 {}
@@ -137,43 +177,14 @@ void ParticleSystem::Resize(unsigned int numParticles)
 void ParticleSystem::BuildBuffer()
 {}
 
-//------------------------- Randomize methods ---------------------------------------------------------------------
-
-// Iterates through the particle buffer and randomly distributes the particle using the ParticleSystem::RandomizeParticle().
-void ParticleSystem::RandomizeParticles()
-{
-	for (std::vector<Particle>::iterator it = particlesContainer.begin(); it != particlesContainer.end(); it++)
-	{
-		RandomizeParticle(*it);
-	}
-}
-
-// This method will randomly distribute a single particle on a unit circle centered at the origin of the particle effect.
-void ParticleSystem::RandomizeParticle(Particle& particle)
-{
-	particle.life = .0f;
-	duration = rand() % 3 + 3; // in the range 3 to 6.
-
-	float3 unitVec = float3((float) rand() / (float) RAND_MAX, (float)rand() / (float)RAND_MAX, (float)rand() / (float)RAND_MAX);
-
-	particle.position = unitVec * 1.f;
-	particle.speed = unitVec * (rand() % 10 + 10);
-}
-
 //------------------------- Editor --------------------------------------------------------------------------------
 
 void ParticleSystem::EditorContent()
 {
-	// Duration ----------
-	float tmpFloat = duration;
-	if(ImGui::DragFloat("Duration", &tmpFloat, .01f))
-	{
-		duration = tmpFloat;
-	}
 	// Looping -----------
 	ImGui::Checkbox("Looping", &looping);
 	// Start Lifetime ----
-	tmpFloat = startLifetime;
+	float tmpFloat = startLifetime;
 	if (ImGui::DragFloat("Start Lifetime", &tmpFloat, .01f))
 	{
 		startLifetime = tmpFloat;
@@ -185,16 +196,23 @@ void ParticleSystem::EditorContent()
 		startSpeed = tmpFloat;
 	}
 	// Start Size --------
-	tmpFloat = startSize;
-	if (ImGui::DragFloat("Start Size", &tmpFloat, .01f))
+	static float vecSize[2] = { startSize, endSize };
+	if (ImGui::DragFloat2("start/end Size", vecSize, .01f))
 	{
-		startSize = tmpFloat;
+		startSize = vecSize[1];
+		endSize = vecSize[2];
 	}
 	// Gravity Modifier --
 	tmpFloat = gravityModifier;
 	if (ImGui::DragFloat("Gravity Modifier", &tmpFloat, .01f))
 	{
 		gravityModifier = tmpFloat;
+	}
+	// Alpha -------------
+	tmpFloat = alpha;
+	if (ImGui::DragFloat("Alpha Particle", &tmpFloat, .01f, 0, 1))
+	{
+		alpha = tmpFloat;
 	}
 	// Max particles -----
 	int tmpInt = maxParticles;
@@ -229,13 +247,13 @@ void ParticleSystem::EditorContent()
 		}
 		// Angle -------------
 		tmpFloat = angleShape;
-		if (ImGui::DragFloat("Start Speed", &tmpFloat, .01f))
+		if (ImGui::DragFloat("Angle Shape", &tmpFloat, .01f, .0f, 90.0f))
 		{
 			angleShape = tmpFloat;
 		}
 		// Radius ------------
 		tmpFloat = radiusShape;
-		if (ImGui::DragFloat("Start Speed", &tmpFloat, .01f))
+		if (ImGui::DragFloat("Radius Shape", &tmpFloat, .01f, 0.01f, 10000.0f))
 		{
 			radiusShape = tmpFloat;
 		}

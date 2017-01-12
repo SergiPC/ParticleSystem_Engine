@@ -8,12 +8,12 @@
 
 struct Particle
 {
-	Particle() : position(float3::zero), speed(float3::zero), color(float4::zero), angle(.0f), size(.0f), life(.0f)
+	Particle() : position(float3::zero), speed(float3::zero), color(float4::zero), pSize(.0f), sSize(.0f), eSize(.0f), life(.0f), pLifeTime(.0f), pGravity(.0f)
 	{}
 
 	float3 position, speed;
 	float4 color;
-	float angle, size, life;
+	float pSize, sSize, eSize, life, pLifeTime, pGravity;
 };
 
 struct Vertex
@@ -49,9 +49,6 @@ public:
 	void Resize(unsigned int numParticles);
 	void BuildBuffer();
 
-	void RandomizeParticles();
-	void RandomizeParticle(Particle& particle);
-
 	void EditorContent();
 
 	void SaveSpecifics(pugi::xml_node& myNode);
@@ -64,12 +61,13 @@ public:
 
 private:
 	// Global ------------
-	float duration = .0f;
 	bool looping = false;
 	float startLifetime = .0f;
 	float startSpeed = .0f;
 	float startSize = .0f;
+	float endSize = .0f;
 	float gravityModifier = .0f;
+	float alpha = .0f;
 	int maxParticles = 0;
 	// Emission ----------
 	int rate = 0;
@@ -84,8 +82,6 @@ private:
 	unsigned int particleBuffer = 0;
 	unsigned int vertexBuffer = 0;
 	float4x4 localToWorldMatrix;
-	// Apply this force to every particle in the effect
-	float3 particleForce = float3::zero;
 
 	// -------------------
 	int lastUsedParticle = 0;
